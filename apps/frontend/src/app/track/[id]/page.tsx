@@ -25,12 +25,13 @@ async function getTrack(id: string): Promise<Track | null> {
     }
 }
 
-interface PageProps {
-    params: { id: string }
-}
-
-export default async function TrackPage({ params }: PageProps) {
-    const track = await getTrack(params.id)
+export default async function TrackPage({
+    params,
+}: {
+    params: Promise<{ id: string }>
+}) {
+    const { id } = await params
+    const track = await getTrack(id)
 
     if (!track) {
         notFound()
@@ -66,3 +67,4 @@ export default async function TrackPage({ params }: PageProps) {
         </main>
     )
 }
+
