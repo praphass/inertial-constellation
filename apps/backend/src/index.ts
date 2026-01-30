@@ -10,9 +10,28 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// Middleware
+// CORS - Allow Vercel production and preview URLs
+const allowedOrigins = [
+    process.env.FRONTEND_URL?.replace(/\/$/, ''), // Remove trailing slash
+    'http://localhost:3000',
+]
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true)
+
+        // Check if origin is allowed or matches Vercel preview pattern
+        const isAllowed = allowedOrigins.some(allowed =>
+            allowed && origin.includes(allowed.replace('https://', '').replace('http://', ''))
+        ) || origin.includes('.vercel.app')
+
+        if (isAllowed) {
+            callback(null, true)
+        } else {
+            callback(new Error('Not allowed by CORS'))
+        }
+    },
     credentials: true,
 }))
 app.use(express.json())
