@@ -7,11 +7,14 @@ interface ShareButtonProps {
     title: string
 }
 
+// Production URL for sharing (not preview URLs)
+const SHARE_BASE_URL = process.env.NEXT_PUBLIC_SHARE_URL || 'https://soundcloud-frontend.vercel.app'
+
 export default function ShareButton({ trackId, title }: ShareButtonProps) {
     const [copied, setCopied] = useState(false)
 
     const handleShare = async () => {
-        const url = `${window.location.origin}/track/${trackId}`
+        const url = `${SHARE_BASE_URL}/track/${trackId}`
 
         if (navigator.share) {
             try {
