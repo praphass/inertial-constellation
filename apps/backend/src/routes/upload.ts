@@ -13,45 +13,74 @@ const upload = multer({
         fileSize: 50 * 1024 * 1024, // 50MB limit
     },
     fileFilter: (req, file, cb) => {
-        // Only accept audio files
-        if (file.mimetype.startsWith('audio/')) {
+        // Accept audio and image files
+        if (file.mimetype.startsWith('audio/') || file.mimetype.startsWith('image/')) {
             cb(null, true)
         } else {
-            cb(new Error('Only audio files are allowed'))
+            cb(new Error('Only audio and image files are allowed'))
         }
     },
 })
 
-// POST /api/upload - Upload audio file
-uploadRouter.post('/', upload.single('file'), async (req, res) => {
+// POST /api/upload - Upload audio file with optional cover
+uploadRouter.post('/', upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'cover', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const file = req.file
-        if (!file) {
-            return res.status(400).json({ success: false, error: 'No file uploaded' })
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] }
+        const audioFile = files['file']?.[0]
+        const coverFile = files['cover']?.[0]
+
+        if (!audioFile) {
+            return res.status(400).json({ success: false, error: 'No audio file uploaded' })
         }
 
-        const { title, artist, cover_url } = req.body as CreateTrackInput
+        const { title, artist, share_enabled, share_expires_at } = req.body
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Title is required' })
         }
 
-        // Generate unique file path
-        const fileExt = file.originalname.split('.').pop() || 'mp3'
+        // Generate unique file path for audio
+        const fileExt = audioFile.originalname.split('.').pop() || 'mp3'
         const fileName = `${uuidv4()}.${fileExt}`
         const filePath = `tracks/${fileName}`
 
-        // Upload to Supabase Storage
+        // Upload audio to Supabase Storage
         const { error: uploadError } = await supabase.storage
             .from(BUCKET_NAME)
-            .upload(filePath, file.buffer, {
-                contentType: file.mimetype,
+            .upload(filePath, audioFile.buffer, {
+                contentType: audioFile.mimetype,
                 upsert: false,
             })
 
         if (uploadError) {
             console.error('Upload error:', uploadError)
-            return res.status(500).json({ success: false, error: 'Failed to upload file' })
+            return res.status(500).json({ success: false, error: 'Failed to upload audio file' })
+        }
+
+        // Upload cover image if provided
+        let coverUrl: string | null = null
+        if (coverFile) {
+            const coverExt = coverFile.originalname.split('.').pop() || 'jpg'
+            const coverFileName = `${uuidv4()}.${coverExt}`
+            const coverPath = `covers/${coverFileName}`
+
+            const { error: coverUploadError } = await supabase.storage
+                .from(BUCKET_NAME)
+                .upload(coverPath, coverFile.buffer, {
+                    contentType: coverFile.mimetype,
+                    upsert: false,
+                })
+
+            if (!coverUploadError) {
+                // Get public URL for cover
+                const { data: publicUrlData } = supabase.storage
+                    .from(BUCKET_NAME)
+                    .getPublicUrl(coverPath)
+                coverUrl = publicUrlData.publicUrl
+            }
         }
 
         // Create track record in database
@@ -61,14 +90,16 @@ uploadRouter.post('/', upload.single('file'), async (req, res) => {
                 title,
                 artist: artist || 'Unknown Artist',
                 file_path: filePath,
-                file_size: file.size,
-                cover_url: cover_url || null,
+                file_size: audioFile.size,
+                cover_url: coverUrl,
+                share_enabled: share_enabled !== 'false',
+                share_expires_at: share_expires_at || null,
             })
             .select()
             .single()
 
         if (dbError) {
-            // Cleanup: delete uploaded file if DB insert fails
+            // Cleanup: delete uploaded files if DB insert fails
             await supabase.storage.from(BUCKET_NAME).remove([filePath])
             throw dbError
         }
@@ -87,3 +118,4 @@ uploadRouter.post('/', upload.single('file'), async (req, res) => {
         })
     }
 })
+

@@ -29,12 +29,12 @@ export default async function HomePage() {
         <main className="container mx-auto px-4 py-8">
             {/* Header */}
             <header className="flex items-center justify-between mb-8">
-                <h1 className="text-3xl font-bold gradient-text">SoundCloud Player</h1>
+                <h1 className="text-3xl font-bold gradient-text">Song Demo</h1>
                 <Link
-                    href="/upload"
+                    href="/admin"
                     className="px-6 py-3 bg-player-accent hover:bg-player-accent-hover rounded-full font-semibold transition-colors"
                 >
-                    Upload Track
+                    Admin
                 </Link>
             </header>
 
@@ -47,12 +47,12 @@ export default async function HomePage() {
                         </svg>
                     </div>
                     <h2 className="text-xl font-semibold mb-2">No tracks yet</h2>
-                    <p className="text-gray-400 mb-6">Upload your first track to get started</p>
+                    <p className="text-gray-400 mb-6">Go to admin to add your first track</p>
                     <Link
-                        href="/upload"
+                        href="/admin"
                         className="inline-block px-8 py-3 bg-player-accent hover:bg-player-accent-hover rounded-full font-semibold transition-colors"
                     >
-                        Upload Track
+                        Go to Admin
                     </Link>
                 </div>
             ) : (

@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-    title: 'SoundCloud Player',
-    description: 'Share and play your music with a modern audio player',
+    title: 'Song Demo',
+    description: 'Share and play your demo tracks',
 }
 
 export default function RootLayout({
