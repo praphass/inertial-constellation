@@ -84,6 +84,7 @@ uploadRouter.post('/', upload.fields([
         }
 
         // Create track record in database
+        const { album_id, track_number } = req.body
         const { data: track, error: dbError } = await supabase
             .from('tracks')
             .insert({
@@ -94,6 +95,8 @@ uploadRouter.post('/', upload.fields([
                 cover_url: coverUrl,
                 share_enabled: share_enabled !== 'false',
                 share_expires_at: share_expires_at || null,
+                album_id: album_id || null,
+                track_number: parseInt(track_number) || 1,
             })
             .select()
             .single()

@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 import { tracksRouter } from './routes/tracks'
 import { streamRouter } from './routes/stream'
 import { uploadRouter } from './routes/upload'
+import { artistsRouter } from './routes/artists'
+import { albumsRouter } from './routes/albums'
 
 dotenv.config()
 
@@ -42,6 +44,8 @@ app.get('/health', (req, res) => {
 })
 
 // Routes
+app.use('/api/artists', artistsRouter)
+app.use('/api/albums', albumsRouter)
 app.use('/api/tracks', tracksRouter)
 app.use('/api/stream', streamRouter)
 app.use('/api/upload', uploadRouter)
